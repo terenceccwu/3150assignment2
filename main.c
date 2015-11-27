@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "read_device.h"
 
 int print_usage(char* argv0)
 {
@@ -34,12 +35,15 @@ int main(int argc, char* argv[])
 				strcpy(dev_name, optarg);
 				break;
 			case 'l':
+				strcpy(target, optarg);
 				flag += 4;
 				break;
 			case 'r':
+				strcpy(target, optarg);
 				flag += 2;
 				break;
 			case 'o':
+				strcpy(dest, optarg);
 				flag += 1;
 				break;
 			default: // opt == '?' i.e. missing option argument or option not found
@@ -48,21 +52,15 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	if(flag == 4) //list
+	if(flag == 3 || flag == 4)
 	{
-
-	}
-	else if(flag == 3) //recovery
-	{
-
+		read_device(dev_name,target);
 	}
 	else
 	{
 		print_usage(argv[0]);
 		return 0;
 	}
-
-	printf("%s\n", dev_name);
 
 	return 0;
 }

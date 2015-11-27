@@ -1,0 +1,1 @@
+int read_device(char* dev_name, char* target);
