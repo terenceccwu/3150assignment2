@@ -26,48 +26,59 @@ int list_directory(char* dev_name, char* target)
 	
 
 	//read FAT array
-	int fat[bootent.BPB_FATSz32 * bootent.BPB_BytsPerSec / 4];
-	
+	int fat_size = bootent.BPB_FATSz32 * bootent.BPB_BytsPerSec; //in bytes
+	int fat[fat_size / 4];
+	pread(disk, fat, fat_size, start_of_FAT);
 
-	int cluster_address = start_of_Data;
-
+	int cluster_num = 2;
 	int count = 1;
 
-	int rec;
-	for(rec=0; rec < num_of_dirent; rec++)
+	for(;cluster_num < 0x0ffffff8; cluster_num = fat[cluster_num])
 	{
-		struct DirEntry dirent;
-		pread(disk, &dirent, sizeof(dirent), cluster_address + rec * 32);
+		int cluster_address = start_of_Data + (cluster_num - 2) * bootent.BPB_SecPerClus * bootent.BPB_BytsPerSec;
 
-		if((dirent.DIR_Attr & 0x0F == 0x0F ) || (dirent.DIR_Name[0] == 0)) //skip LFN and empty entries
+		int rec;
+		for(rec=0; rec < num_of_dirent; rec++)
 		{
-			continue;
+			struct DirEntry dirent;
+			pread(disk, &dirent, sizeof(dirent), cluster_address + rec * 32);
+
+			//skip LFN and empty entries
+			if((dirent.DIR_Attr & 0x0F == 0x0F ) || (dirent.DIR_Name[0] == 0)) 
+				continue;
+
+			//get filename
+			unsigned char filename[13];
+			int i;
+			for(i=0;(dirent.DIR_Name[i] != 0x20) && (i<8);i++)
+				filename[i] = dirent.DIR_Name[i];
+			//place a dot if contains extension
+			if(dirent,dirent.DIR_Name[8] != 0x20)
+			{
+				filename[i++] = '.';
+				//get extension
+				int j;
+				for(j=8;(dirent.DIR_Name[j] != 0x20) && (j<11);j++,i++)
+					filename[i] = dirent.DIR_Name[j];
+			}
+			//end with NULL char
+			filename[i] = '\0';
+
+			if(filename[0] == 0xe5) //replace 0xE5 in deleted files
+				filename[0] = '?';
+
+			printf("%d, %s", count++, filename);
+
+			//if is Directory, skip the remaining
+			if((dirent.DIR_Attr & 0x10) == 0x10)
+				printf("/\n");
+			else
+			{
+				//print filesize and starting cluster num
+				int starting_cluster_num = (int)dirent.DIR_FstClusLO + ((int)dirent.DIR_FstClusHI)*16*16;
+				printf(", %d, %d\n", dirent.DIR_FileSize, starting_cluster_num);
+			}
 		}
-
-		char filename[13];
-		int i;
-		//get filename
-		for(i=0;dirent.DIR_Name[i] != 0x20;i++)
-			filename[i] = dirent.DIR_Name[i];
-		//place a dot if contains extension
-		if(dirent,dirent.DIR_Name[8] != 0x20)
-		{
-			filename[i++] = '.';
-			//get extension
-			int j;
-			for(j=8;dirent.DIR_Name[j] != 0x20;j++,i++)
-				filename[i] = dirent.DIR_Name[j];
-		}
-		//end with NULL char
-		filename[i] = '\0';
-
-		int starting_cluster_num = (int)dirent.DIR_FstClusLO + ((int)dirent.DIR_FstClusHI)*16*16;
-		printf("%d, %s", count++, filename);
-
-		if((dirent.DIR_Attr & 0x10) == 0x10) //if is Directory, skip the remaining
-			printf("/\n");
-		else
-			printf(", %d, %d\n", dirent.DIR_FileSize, starting_cluster_num);
 			
 	}
 
