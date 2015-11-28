@@ -6,33 +6,16 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-int list_directory(char* dev_name, char* target)
+struct BootEntry bootent;
+unsigned int start_of_FAT;
+unsigned int start_of_Data;
+
+int print_entry(int disk, unsigned int fat[], unsigned int cluster_num)
 {
-	printf("hihi read_device\n");
-	printf("%s-%s\n", dev_name, target);
-	printf("%d\n", (int)sizeof(struct BootEntry));
-
-	struct BootEntry bootent;
-	int disk = open(dev_name,O_RDONLY);
-	pread(disk,&bootent,sizeof(bootent),0);
-
-	unsigned int start_of_FAT = bootent.BPB_RsvdSecCnt * bootent.BPB_BytsPerSec;
-	unsigned int start_of_Data = start_of_FAT + bootent.BPB_FATSz32 * bootent.BPB_NumFATs * bootent.BPB_BytsPerSec; 
-	printf("start of FAT: %d\n", start_of_FAT);
-	printf("start of Data Area: %d\n",start_of_Data);
-
 	unsigned int num_of_dirent = (bootent.BPB_SecPerClus * bootent.BPB_BytsPerSec) / 32;
-	printf("num_of_dirent: %d\n", num_of_dirent);
-	
-
-	//read FAT array
-	unsigned int fat_size = bootent.BPB_FATSz32 * bootent.BPB_BytsPerSec; //in bytes
-	unsigned int fat[fat_size / 4];
-	pread(disk, fat, fat_size, start_of_FAT);
-
-	unsigned int cluster_num = 2;
 	unsigned int count = 1;
 
+	//traverse link list
 	for(;cluster_num < 0x0ffffff8; cluster_num = fat[cluster_num])
 	{
 		unsigned int cluster_address = start_of_Data + (cluster_num - 2) * bootent.BPB_SecPerClus * bootent.BPB_BytsPerSec;
@@ -78,9 +61,38 @@ int list_directory(char* dev_name, char* target)
 				unsigned int starting_cluster_num = (unsigned int)dirent.DIR_FstClusLO + ((unsigned int)dirent.DIR_FstClusHI)*16*16;
 				printf(", %u, %u\n", dirent.DIR_FileSize, starting_cluster_num);
 			}
-		}
-			
+		}	
 	}
+
+	return 0;
+}
+
+int list_directory(char* dev_name, char* target)
+{
+	printf("hihi read_device\n");
+	printf("%s-%s\n", dev_name, target);
+	printf("%d\n", (int)sizeof(struct BootEntry));
+	
+	//open & read boot entry
+	//bootent is a global var
+	int disk = open(dev_name,O_RDONLY);
+	pread(disk,&bootent,sizeof(bootent),0);
+
+	//start_of_FAT & start_of_Data is global var
+	start_of_FAT = bootent.BPB_RsvdSecCnt * bootent.BPB_BytsPerSec;
+	start_of_Data = start_of_FAT + bootent.BPB_FATSz32 * bootent.BPB_NumFATs * bootent.BPB_BytsPerSec; 
+	printf("start of FAT: %d\n", start_of_FAT);
+	printf("start of Data Area: %d\n",start_of_Data);
+
+	//read FAT array
+	unsigned int fat_size = bootent.BPB_FATSz32 * bootent.BPB_BytsPerSec; //in bytes
+	unsigned int fat[fat_size / 4];
+	pread(disk, fat, fat_size, start_of_FAT);
+
+	//cluster to be print
+	unsigned int cluster_num = 2;
+
+	print_entry(disk, fat, cluster_num);
 
 	close(disk);
 
