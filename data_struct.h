@@ -1,9 +1,6 @@
-#include <stdio.h>
-#include "read_device.h"
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+//Warning! long in 64-bit sys is 8 byte!
+//have to change all long to int
+//not yet test for 32-bit sys
 
 #pragma pack(push,1)
 struct BootEntry {
@@ -37,17 +34,19 @@ struct BootEntry {
 };
 #pragma pack(pop)
 
-int read_device(char* dev_name, char* target)
-{
-	printf("hihi read_device\n");
-	printf("%s-%s\n", dev_name, target);
-	printf("%d\n", (int)sizeof(struct BootEntry));
-
-	struct BootEntry bootent;
-	int disk = open("/dev/ram0",O_RDONLY);
-	pread(disk,&bootent,sizeof(bootent),0);
-	printf("%d\n", bootent.BPB_BytsPerSec);
-	close(disk);
-
-	return 0;
-}
+#pragma pack(push,1)
+struct DirEntry{
+	unsigned char DIR_Name[11]; /* File name */
+	unsigned char DIR_Attr; /* File attributes */
+	unsigned char DIR_NTRes; /* Reserved */
+	unsigned char DIR_CrtTimeTenth; /* Created time (tenths of second) */
+	unsigned short DIR_CrtTime; /* Created time (hours, minutes, seconds) */
+	unsigned short DIR_CrtDate; /* Created day */
+	unsigned short DIR_LstAccDate; /* Accessed day */
+	unsigned short DIR_FstClusHI; /* High 2 bytes of the first cluster address */
+	unsigned short DIR_WrtTime; /* Written time (hours, minutes, seconds */
+	unsigned short DIR_WrtDate; /* Written day */
+	unsigned short DIR_FstClusLO; /* Low 2 bytes of the first cluster address */
+	unsigned int DIR_FileSize; /* File size in bytes. (0 for directories) */
+};
+#pragma pack(pop)

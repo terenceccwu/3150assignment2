@@ -1,11 +1,13 @@
 CC=gcc
 CFLAGS=-Wall -O0
 
-all: main.o read_device.o
-	gcc -o recovery main.o read_device.o
+all: recovery
 
-main.o: main.c
-	gcc -c main.c
+recovery: main.o list_directory.o
+	gcc -o recovery $^
 
-read_device.o: read_device.c
-	gcc -c read_device.c
+main.o: main.c list_directory.h
+	gcc -c $< 
+
+list_directory.o: list_directory.c list_directory.h data_struct.h
+	gcc -c $<

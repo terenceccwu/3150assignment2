@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "read_device.h"
+#include "list_directory.h"
 
 int print_usage(char* argv0)
 {
@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 
 	if(flag == 3 || flag == 4)
 	{
-		read_device(dev_name,target);
+		list_directory(dev_name,target);
 	}
 	else
 	{
