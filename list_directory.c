@@ -16,28 +16,28 @@ int list_directory(char* dev_name, char* target)
 	int disk = open(dev_name,O_RDONLY);
 	pread(disk,&bootent,sizeof(bootent),0);
 
-	int start_of_FAT = bootent.BPB_RsvdSecCnt * bootent.BPB_BytsPerSec;
-	int start_of_Data = start_of_FAT + bootent.BPB_FATSz32 * bootent.BPB_NumFATs * bootent.BPB_BytsPerSec; 
+	unsigned int start_of_FAT = bootent.BPB_RsvdSecCnt * bootent.BPB_BytsPerSec;
+	unsigned int start_of_Data = start_of_FAT + bootent.BPB_FATSz32 * bootent.BPB_NumFATs * bootent.BPB_BytsPerSec; 
 	printf("start of FAT: %d\n", start_of_FAT);
 	printf("start of Data Area: %d\n",start_of_Data);
 
-	int num_of_dirent = (bootent.BPB_SecPerClus * bootent.BPB_BytsPerSec) / 32;
+	unsigned int num_of_dirent = (bootent.BPB_SecPerClus * bootent.BPB_BytsPerSec) / 32;
 	printf("num_of_dirent: %d\n", num_of_dirent);
 	
 
 	//read FAT array
-	int fat_size = bootent.BPB_FATSz32 * bootent.BPB_BytsPerSec; //in bytes
-	int fat[fat_size / 4];
+	unsigned int fat_size = bootent.BPB_FATSz32 * bootent.BPB_BytsPerSec; //in bytes
+	unsigned int fat[fat_size / 4];
 	pread(disk, fat, fat_size, start_of_FAT);
 
-	int cluster_num = 2;
-	int count = 1;
+	unsigned int cluster_num = 2;
+	unsigned int count = 1;
 
 	for(;cluster_num < 0x0ffffff8; cluster_num = fat[cluster_num])
 	{
-		int cluster_address = start_of_Data + (cluster_num - 2) * bootent.BPB_SecPerClus * bootent.BPB_BytsPerSec;
+		unsigned int cluster_address = start_of_Data + (cluster_num - 2) * bootent.BPB_SecPerClus * bootent.BPB_BytsPerSec;
 
-		int rec;
+		unsigned int rec;
 		for(rec=0; rec < num_of_dirent; rec++)
 		{
 			struct DirEntry dirent;
@@ -75,8 +75,8 @@ int list_directory(char* dev_name, char* target)
 			else
 			{
 				//print filesize and starting cluster num
-				int starting_cluster_num = (int)dirent.DIR_FstClusLO + ((int)dirent.DIR_FstClusHI)*16*16;
-				printf(", %d, %d\n", dirent.DIR_FileSize, starting_cluster_num);
+				unsigned int starting_cluster_num = (unsigned int)dirent.DIR_FstClusLO + ((unsigned int)dirent.DIR_FstClusHI)*16*16;
+				printf(", %u, %u\n", dirent.DIR_FileSize, starting_cluster_num);
 			}
 		}
 			
