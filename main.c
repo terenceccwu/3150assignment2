@@ -1,7 +1,11 @@
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
+#include "data_struct.h" // must declare this before list_directory.h
 #include "list_directory.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
 
 int print_usage(char* argv0)
 {
@@ -52,9 +56,43 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	if(flag == 3 || flag == 4)
+	//open & read boot entry
+	struct BootEntry bootent;
+	int disk = open(dev_name,O_RDONLY);
+	pread(disk,&bootent,sizeof(bootent),0);
+
+	//calculate start_of_FAT & start_of_Data
+	unsigned int start_of_FAT = bootent.BPB_RsvdSecCnt * bootent.BPB_BytsPerSec;
+	unsigned int start_of_Data = start_of_FAT + bootent.BPB_FATSz32 * bootent.BPB_NumFATs * bootent.BPB_BytsPerSec; 
+	printf("start of FAT: %d\n", start_of_FAT);
+	printf("start of Data Area: %d\n",start_of_Data);
+
+	//read FAT array
+	unsigned int fat_size = bootent.BPB_FATSz32 * bootent.BPB_BytsPerSec; //in bytes
+	unsigned int fat[fat_size / 4];
+	pread(disk, fat, fat_size, start_of_FAT);
+
+	DiskInfo diskinfo;
+	diskinfo.dev_name = dev_name;
+	diskinfo.disk_fd = disk;
+	diskinfo.fat = fat;
+	diskinfo.start_of_Data = start_of_Data;
+	diskinfo.byte_per_cluster = (bootent.BPB_SecPerClus * bootent.BPB_BytsPerSec);
+	diskinfo.no_dirent_per_cluster = diskinfo.byte_per_cluster / 32;
+
+	// debug
+	printf("%s-%s\n", diskinfo.dev_name, target);
+	printf("size of boot entry: %d\n", (int)sizeof(struct BootEntry));
+	printf("size of dir entry: %d\n", (int)sizeof(struct DirEntry));
+	//end debug
+
+	if(flag == 4)
 	{
-		list_directory(dev_name,target);
+		list_directory(diskinfo,target);
+	}
+	else if(flag == 3)
+	{
+		// recover_main(diskinfo,target);
 	}
 	else
 	{

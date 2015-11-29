@@ -1,3 +1,5 @@
-int print_entry(int disk, unsigned int fat[], unsigned int cluster_num);
-int find_directory(unsigned char target[], int disk, unsigned int fat[], unsigned int cluster_num);
-int list_directory(char* dev_name, char* target);
+int parse_filename(unsigned char output[], unsigned char raw[]);
+int get_dirEntry(struct DirEntry* temp_dirent, DiskInfo diskinfo, unsigned int* cluster_num, unsigned int* rec);
+int print_entry(DiskInfo diskinfo, unsigned int cluster_num);
+int find_directory(unsigned char target[], struct DiskInfo diskinfo, unsigned int cluster_num);
+int list_directory(DiskInfo diskinfo, char* target);

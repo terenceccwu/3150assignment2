@@ -50,3 +50,12 @@ struct DirEntry{
 	unsigned int DIR_FileSize; /* File size in bytes. (0 for directories) */
 };
 #pragma pack(pop)
+
+typedef struct DiskInfo{
+	char* dev_name;
+	int disk_fd;
+	unsigned int* fat;
+	unsigned int start_of_Data;
+	unsigned int byte_per_cluster;
+	unsigned int no_dirent_per_cluster;
+}DiskInfo;
