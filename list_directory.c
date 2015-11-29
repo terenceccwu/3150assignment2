@@ -141,7 +141,5 @@ int list_directory(DiskInfo diskinfo, unsigned char* target)
 
 	print_entry(diskinfo, cluster_num);
 
-	close(diskinfo.disk_fd);
-
 	return 0;
 }

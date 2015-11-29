@@ -97,8 +97,8 @@ int main(int argc, char* argv[])
 	else
 	{
 		print_usage(argv[0]);
-		return 0;
 	}
 
+	close(disk);
 	return 0;
 }
