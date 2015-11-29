@@ -84,7 +84,7 @@ int print_entry(DiskInfo diskinfo, unsigned int cluster_num)
 			printf("/");
 
 		//print filesize and starting cluster num
-		unsigned int starting_cluster_num = (unsigned int)dirent.DIR_FstClusLO + ((unsigned int)dirent.DIR_FstClusHI)*16*16*16*16;
+		unsigned int starting_cluster_num = (unsigned int)dirent.DIR_FstClusLO + ((unsigned int)dirent.DIR_FstClusHI)* 0x10000;
 		printf(", %u, %u\n", dirent.DIR_FileSize, starting_cluster_num);
 	}
 
@@ -109,7 +109,7 @@ int find_directory(unsigned char target[], DiskInfo diskinfo, unsigned int clust
 		//compare
 		if(strcmp(filename,target) == 0) //target found!
 		{
-			unsigned int starting_cluster_num = (unsigned int)dirent.DIR_FstClusLO + ((unsigned int)dirent.DIR_FstClusHI)*16*16*16*16;
+			unsigned int starting_cluster_num = (unsigned int)dirent.DIR_FstClusLO + ((unsigned int)dirent.DIR_FstClusHI)* 0x10000;
 			if(starting_cluster_num == 0) //re map cluster 0 to 2
 				starting_cluster_num = 2;
 			return starting_cluster_num;
@@ -119,14 +119,14 @@ int find_directory(unsigned char target[], DiskInfo diskinfo, unsigned int clust
 	return 0;
 }
 
-int list_directory(DiskInfo diskinfo, char* target)
+int list_directory(DiskInfo diskinfo, unsigned char* target)
 {
 	//cluster to be print
 	unsigned int cluster_num = 2; //defalut is 2 (root)
 
 	//go into sub-directory
 	char* temp = strtok(target,"/");
-	int k = 0;
+
 	while(temp)
 	{
 		//try to update cluster_num

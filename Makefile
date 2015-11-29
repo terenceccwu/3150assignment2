@@ -12,5 +12,5 @@ main.o: main.c list_directory.h recover.h
 list_directory.o: list_directory.c list_directory.h data_struct.h
 	gcc -c $<
 
-# recover.o: recover.c recover.h
-# 	gcc -c $<
+recover.o: recover.c recover.h
+	gcc -c $<

@@ -17,9 +17,9 @@ int print_usage(char* argv0)
 
 int main(int argc, char* argv[])
 {
-	char dev_name[1024];
-	char target[1024];
-	char dest[1024];
+	unsigned char dev_name[1025];
+	unsigned char target[1025];
+	unsigned char dest[1025];
 
 	//check argument format
 	if(argc <= 1 || strcmp(argv[1],"-d") != 0) //first option must be -d
@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
 	}
 	else if(flag == 3)
 	{
-		// recover_main(diskinfo,target);
+		recover_main(diskinfo,target,dest);
 	}
 	else
 	{
