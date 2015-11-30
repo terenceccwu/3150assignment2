@@ -77,12 +77,7 @@ int print_entry(DiskInfo diskinfo, unsigned int cluster_num)
 		printf("%d, %s", count++, filename);
 
 		//if is ./ or ../ Directory, skip the remaining
-		if(((dirent.DIR_Attr & 0x10) == 0x10) && filename[0] == 0x2e)
-		{
-			printf("/\n");
-			continue;
-		}
-		else if ((dirent.DIR_Attr & 0x10) == 0x10) //if it is a Directory
+		if ((dirent.DIR_Attr & 0x10) == 0x10) //if it is a Directory
 			printf("/");
 
 		//print filesize and starting cluster num
