@@ -32,8 +32,7 @@ int search_file(unsigned char target[], DiskInfo diskinfo, unsigned int cluster_
 
 			if(diskinfo.fat[starting_cluster_num] != 0) //cluster is occupied by a newer file
 			{
-				printf("error - fail to recover\n");
-				return 0;
+				return -1;
 			}
 			return starting_cluster_num;
 		}
@@ -75,8 +74,10 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 
 	unsigned int starting_cluster_num;
 	unsigned int size = 0; //to be pass back by search_file()
-	if(!(starting_cluster_num = search_file(temp, diskinfo, cluster_num, &size)))
+	if((starting_cluster_num = search_file(temp, diskinfo, cluster_num, &size))==0)
 		printf("%s: error - file not found\n",temp);
+	else if (starting_cluster_num == -1)
+		printf("%s: error - fail to recover\n",temp);
 	else
 	{
 		//calculate address
