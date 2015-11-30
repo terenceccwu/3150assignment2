@@ -42,12 +42,13 @@ int get_dirEntry(struct DirEntry* temp_dirent, DiskInfo diskinfo, unsigned int* 
 		{
 			pread(diskinfo.disk_fd, temp_dirent, sizeof(*temp_dirent), cluster_address + *rec * 32);
 			(*rec)++;
-		}
-		else
-		{
-			printf("pass!\n");
-			*cluster_num = diskinfo.fat[(*cluster_num)];
-			*rec = 0;
+
+			if(*rec == 16) // if reaches last element of cluster, reset all pointers
+			{
+				*cluster_num = diskinfo.fat[(*cluster_num)];
+				*rec = 0;
+			}
+
 		}
 		return 1;
 	}
