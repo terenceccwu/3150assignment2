@@ -15,7 +15,7 @@ int search_file(unsigned char target[], DiskInfo diskinfo, unsigned int cluster_
 	while(get_dirEntry(&dirent, diskinfo, &cluster_num, &rec))
 	{
 		//skip non-deleted files, folders, LFN and empty entries
-		if((dirent.DIR_Name[0] != 0xe5 || (dirent.DIR_Attr & 0x10) == 0x10) || (dirent.DIR_Attr & 0x0F == 0x0F ) || (dirent.DIR_Name[0] == 0)) 
+		if(((dirent.DIR_Attr & 0x10) == 0x10) || (dirent.DIR_Attr & 0x0F == 0x0F ) || (dirent.DIR_Name[0] == 0)) 
 			continue;
 
 		//get filename
@@ -29,6 +29,12 @@ int search_file(unsigned char target[], DiskInfo diskinfo, unsigned int cluster_
 		{
 			unsigned int starting_cluster_num = (unsigned int)dirent.DIR_FstClusLO + ((unsigned int)dirent.DIR_FstClusHI)* 0x10000;
 			*size = dirent.DIR_FileSize;
+
+			if(diskinfo.fat[starting_cluster_num] != 0) //cluster is occupied by a newer file
+			{
+				printf("error - fail to recover\n");
+				return 0;
+			}
 			return starting_cluster_num;
 		}
 	}

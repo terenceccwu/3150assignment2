@@ -45,6 +45,7 @@ int get_dirEntry(struct DirEntry* temp_dirent, DiskInfo diskinfo, unsigned int* 
 		}
 		else
 		{
+			printf("pass!\n");
 			*cluster_num = diskinfo.fat[(*cluster_num)];
 			*rec = 0;
 		}
