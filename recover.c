@@ -15,7 +15,7 @@ int search_file(unsigned char target[], DiskInfo diskinfo, unsigned int cluster_
 	while(get_dirEntry(&dirent, diskinfo, &cluster_num, &rec))
 	{
 		//skip non-deleted files, folders, LFN and empty entries
-		if(((dirent.DIR_Attr & 0x10) == 0x10) || (dirent.DIR_Attr & 0x0F == 0x0F ) || (dirent.DIR_Name[0] == 0)) 
+		if(((dirent.DIR_Attr & 0x10) == 0x10) || (dirent.DIR_Attr & 0x0F == 0x0F ) || (dirent.DIR_Name[0] == 0))
 			continue;
 
 		//get filename
@@ -50,7 +50,7 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 	for(i=0;target[i] != '\0';i++)
 		if(target[i] == '/')
 			num_of_slash++;
-	
+
 	//cluster to be print
 	unsigned int cluster_num = 2; //defalut is 2 (root)
 
@@ -64,7 +64,7 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 		cluster_num = find_directory(temp, diskinfo, cluster_num);
 		if(cluster_num == 0) //not found
 		{
-			printf("not found!\n");
+			printf("directory not found!\n");
 			return 0;
 		}
 		temp = strtok(NULL,"/");
@@ -76,12 +76,12 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 	unsigned int starting_cluster_num;
 	unsigned int size = 0; //to be pass back by search_file()
 	if(!(starting_cluster_num = search_file(temp, diskinfo, cluster_num, &size)))
-		printf("file not found!\n");
+		printf("%s: error - file not found\n",temp);
 	else
 	{
 		//calculate address
 		unsigned int address = diskinfo.start_of_Data + (starting_cluster_num - 2) * diskinfo.byte_per_cluster;
-		
+
 		//get dirent again (for file size)
 		struct DirEntry dirent;
 		pread(diskinfo.disk_fd, &dirent, sizeof(dirent), address);
@@ -90,21 +90,26 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 		printf("%u\n", size);
 
 		//write to file
-		int outfile = open(dest, (O_WRONLY|O_CREAT), (S_IRWXU|S_IRWXG|S_IRWXO));
-		
-		char buf[1024]; // buf size = 1024B
-
-		int k;
-		for(k=0; k < size / 1024; k++) //loop for several-1024 times
-		{
-			pread(diskinfo.disk_fd, buf, 1024, address + k*1024);
-			pwrite(outfile, buf, 1024, k*1024);
+		int outfile = open(dest, (O_WRONLY|O_CREAT|O_TRUNC), (S_IRWXU|S_IRWXG|S_IRWXO));
+		if (outfile == -1){
+			printf("%s: failed to open\n", dest);
 		}
-		pread(diskinfo.disk_fd, buf, size % 1024, address + k*1024);
-		pwrite(outfile, buf, size % 1024, k*1024);
-		printf("done!\n");
+		else{
+			char buf[1024]; // buf size = 1024B
+
+			int k;
+			for(k=0; k < size / 1024; k++) //loop for several-1024 times
+			{
+				pread(diskinfo.disk_fd, buf, 1024, address + k*1024);
+				pwrite(outfile, buf, 1024, k*1024);
+			}
+			pread(diskinfo.disk_fd, buf, size % 1024, address + k*1024);
+			pwrite(outfile, buf, size % 1024, k*1024);
+			printf("%s: recovered\n",temp);
+		}
 		close(outfile);
+
 	}
-		
+
 	return 0;
 }
