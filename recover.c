@@ -14,8 +14,8 @@ int search_file(unsigned char target[], DiskInfo diskinfo, unsigned int cluster_
 	unsigned int rec = 0;
 	while(get_dirEntry(&dirent, diskinfo, &cluster_num, &rec))
 	{
-		//skip folders, LFN and empty entries
-		if(((dirent.DIR_Attr & 0x10) == 0x10) || (dirent.DIR_Attr & 0x0F == 0x0F ) || (dirent.DIR_Name[0] == 0)) 
+		//skip non-deleted files, folders, LFN and empty entries
+		if((dirent.DIR_Name[0] != 0xe5 || (dirent.DIR_Attr & 0x10) == 0x10) || (dirent.DIR_Attr & 0x0F == 0x0F ) || (dirent.DIR_Name[0] == 0)) 
 			continue;
 
 		//get filename
@@ -84,7 +84,7 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 		printf("%u\n", size);
 
 		//write to file
-		int outfile = open("./output.txt", (O_WRONLY|O_CREAT), (S_IRWXU|S_IRWXG|S_IRWXO));
+		int outfile = open(dest, (O_WRONLY|O_CREAT), (S_IRWXU|S_IRWXG|S_IRWXO));
 		
 		char buf[1024]; // buf size = 1024B
 
