@@ -130,7 +130,7 @@ int list_directory(DiskInfo diskinfo, unsigned char* target)
 		cluster_num = find_directory(temp, diskinfo, cluster_num);
 		if(cluster_num == 0) //not found
 		{
-			printf("not found!\n");
+			//printf("not found!\n");
 			return 0;
 		}
 		temp = strtok(NULL,"/");

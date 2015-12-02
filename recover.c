@@ -63,7 +63,7 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 		cluster_num = find_directory(temp, diskinfo, cluster_num);
 		if(cluster_num == 0) //not found
 		{
-			printf("directory not found!\n");
+			//printf("directory not found!\n");
 			return 0;
 		}
 		temp = strtok(NULL,"/");
@@ -75,9 +75,9 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 	unsigned int starting_cluster_num;
 	unsigned int size = 0; //to be pass back by search_file()
 	if((starting_cluster_num = search_file(temp, diskinfo, cluster_num, &size))==0)
-		printf("%s: error - file not found\n",temp);
+		printf("%s: error - file not found\n",target);
 	else if (starting_cluster_num == -1)
-		printf("%s: error - fail to recover\n",temp);
+		printf("%s: error - fail to recover\n",target);
 	else
 	{
 		//calculate address
@@ -106,7 +106,7 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 			}
 			pread(diskinfo.disk_fd, buf, size % 1024, address + k*1024);
 			pwrite(outfile, buf, size % 1024, k*1024);
-			printf("%s: recovered\n",temp);
+			printf("%s: recovered\n",target);
 		}
 		close(outfile);
 
