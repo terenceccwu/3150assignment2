@@ -1,2 +1,2 @@
-int search_file(unsigned char target[], DiskInfo diskinfo, unsigned int cluster_num, unsigned int* size);
+int search_file(unsigned char target[], DiskInfo diskinfo, unsigned int cluster_num, unsigned int* size, unsigned int* starting_cluster_num);
 int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]);

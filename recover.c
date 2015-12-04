@@ -7,7 +7,7 @@
 #include <fcntl.h>
 #include <string.h>
 
-int search_file(unsigned char target[], DiskInfo diskinfo, unsigned int cluster_num, unsigned int* size)
+int search_file(unsigned char target[], DiskInfo diskinfo, unsigned int cluster_num, unsigned int* size, unsigned int* starting_cluster_num)
 {
 	//traverse link list
 	struct DirEntry dirent;
@@ -27,14 +27,17 @@ int search_file(unsigned char target[], DiskInfo diskinfo, unsigned int cluster_
 		//if can pass the for loop == found!
 		if(strcmp(filename+1, target+1) == 0)
 		{
-			unsigned int starting_cluster_num = (unsigned int)dirent.DIR_FstClusLO + ((unsigned int)dirent.DIR_FstClusHI)* 0x10000;
+			*starting_cluster_num = (unsigned int)dirent.DIR_FstClusLO + ((unsigned int)dirent.DIR_FstClusHI)* 0x10000;
 			*size = dirent.DIR_FileSize;
 
-			if(diskinfo.fat[starting_cluster_num] != 0) //cluster is occupied by a newer file
+			if(*size == 0)
+				return 2;
+
+			if(diskinfo.fat[*starting_cluster_num] != 0) //cluster is occupied by a newer file
 			{
 				return -1;
 			}
-			return starting_cluster_num;
+			return 1;
 		}
 	}
 	return 0;
@@ -66,32 +69,36 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 			//printf("directory not found!\n");
 			return 0;
 		}
+		printf("%d: %u\n", i, cluster_num);
 		temp = strtok(NULL,"/");
 	}
 	//after loop, temp stores the filename
 
-	printf("%s\n", temp);
+	printf("!%s\n", temp);
 
 	unsigned int starting_cluster_num;
 	unsigned int size = 0; //to be pass back by search_file()
-	if((starting_cluster_num = search_file(temp, diskinfo, cluster_num, &size))==0)
+
+	int status = search_file(temp, diskinfo, cluster_num, &size, &starting_cluster_num);
+
+
+	printf("status: %d\n", status);
+
+	if(status == 0)
 		printf("%s: error - file not found\n",target);
-	else if (starting_cluster_num == -1)
+	else if (status == -1)
 		printf("%s: error - fail to recover\n",target);
 	else
 	{
+		printf("cluster num: %u\n", starting_cluster_num);
 		//calculate address
 		unsigned int address = diskinfo.start_of_Data + (starting_cluster_num - 2) * diskinfo.byte_per_cluster;
 
-		//get dirent again (for file size)
-		struct DirEntry dirent;
-		pread(diskinfo.disk_fd, &dirent, sizeof(dirent), address);
-
 		printf("%u\n", address);
-		printf("%u\n", size);
+		printf("size: %u\n", size);
 
 		//write to file
-		int outfile = open(dest, (O_WRONLY|O_CREAT|O_TRUNC), (S_IRWXU|S_IRWXG|S_IRWXO));
+		int outfile = open(dest, (O_WRONLY|O_CREAT|O_TRUNC), 0777);
 		if (outfile == -1){
 			printf("%s: failed to open\n", dest);
 		}
