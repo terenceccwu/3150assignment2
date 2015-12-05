@@ -64,8 +64,6 @@ int main(int argc, char* argv[])
 	//calculate start_of_FAT & start_of_Data
 	unsigned int start_of_FAT = bootent.BPB_RsvdSecCnt * bootent.BPB_BytsPerSec;
 	unsigned int start_of_Data = start_of_FAT + bootent.BPB_FATSz32 * bootent.BPB_NumFATs * bootent.BPB_BytsPerSec; 
-	printf("start of FAT: %d\n", start_of_FAT);
-	printf("start of Data Area: %d\n",start_of_Data);
 
 	//read FAT array
 	unsigned int fat_size = bootent.BPB_FATSz32 * bootent.BPB_BytsPerSec; //in bytes
@@ -80,19 +78,14 @@ int main(int argc, char* argv[])
 	diskinfo.byte_per_cluster = (bootent.BPB_SecPerClus * bootent.BPB_BytsPerSec);
 	diskinfo.no_dirent_per_cluster = diskinfo.byte_per_cluster / 32;
 
-	// debug
-	printf("%s-%s\n", diskinfo.dev_name, target);
-	printf("size of boot entry: %d\n", (int)sizeof(struct BootEntry));
-	printf("size of dir entry: %d\n", (int)sizeof(struct DirEntry));
-	//end debug
-
 	if(flag == 4)
 	{
 		list_directory(diskinfo,target);
 	}
 	else if(flag == 3)
 	{
-		recover_main(diskinfo,target,dest);
+		if(recover_main(diskinfo,target,dest) == -1)
+			print_usage(argv[0]);
 	}
 	else
 	{

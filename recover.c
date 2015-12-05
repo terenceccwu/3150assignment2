@@ -22,8 +22,6 @@ int search_file(unsigned char target[], DiskInfo diskinfo, unsigned int cluster_
 		unsigned char filename[13];
 		parse_filename(filename, dirent.DIR_Name);
 
-		printf("'%s'+'%s'\n", filename+1, target+1);
-
 		//if can pass the for loop == found!
 		if(strcmp(filename+1, target+1) == 0)
 		{
@@ -45,8 +43,6 @@ int search_file(unsigned char target[], DiskInfo diskinfo, unsigned int cluster_
 
 int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[])
 {
-	printf("recover main!\n");
-
 	//backup target[]
 	unsigned char target_backup[1025];
 	strcpy(target_backup, target);
@@ -65,7 +61,6 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 
 	for(i=0;i < num_of_slash - 1;i++)
 	{
-		printf("%s\n", temp);
 		//try to update cluster_num
 		cluster_num = find_directory(temp, diskinfo, cluster_num);
 		if(cluster_num == 0) //not found
@@ -73,18 +68,42 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 			//printf("directory not found!\n");
 			return 0;
 		}
-		printf("%d: %u\n", i, cluster_num);
 		temp = strtok(NULL,"/");
 	}
 	//after loop, temp stores the filename
+
+	//check filename in 8.3 format
+	if(temp == NULL)
+		return -1;
+	if(temp[0] == '.')
+		return -1;
+
+	for(i = 0; temp[i] != '.' && temp[i] != '\0'; i++)
+	{
+		if(!((temp[i] >= 'A' && temp[i] <= 'Z') || (temp[i] >= '0' && temp[i] <= '9')))
+			return -1;
+	}
+	if(i>8) //name len longer than 8
+		return -1;
+
+	if(temp[i] == '.') // if has extension
+	{
+		i++; //skip the dot
+		int j;
+		for(j=0; temp[i] != '\0'; i++, j++)
+		{
+			if(!((temp[i] >= 'A' && temp[i] <= 'Z') || (temp[i] >= '0' && temp[i] <= '9')))
+				return -1;
+		}
+
+		if(j>3 || j == 0) //ext len incorrect
+			return -1;
+	}
 
 	unsigned int starting_cluster_num;
 	unsigned int size = 0; //to be pass back by search_file()
 
 	int status = search_file(temp, diskinfo, cluster_num, &size, &starting_cluster_num);
-
-
-	printf("status: %d\n", status);
 
 	if(status == 0)
 		printf("%s: error - file not found\n",target_backup);
@@ -92,12 +111,8 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 		printf("%s: error - fail to recover\n",target_backup);
 	else
 	{
-		printf("cluster num: %u\n", starting_cluster_num);
 		//calculate address
 		unsigned int address = diskinfo.start_of_Data + (starting_cluster_num - 2) * diskinfo.byte_per_cluster;
-
-		printf("%u\n", address);
-		printf("size: %u\n", size);
 
 		//write to file
 		int outfile = open(dest, (O_WRONLY|O_CREAT|O_TRUNC), 0777);
