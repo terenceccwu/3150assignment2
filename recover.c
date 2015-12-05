@@ -47,6 +47,10 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 {
 	printf("recover main!\n");
 
+	//backup target[]
+	unsigned char target_backup[1025];
+	strcpy(target_backup, target);
+
 	int i;
 	int num_of_slash = 0;
 	for(i=0;target[i] != '\0';i++)
@@ -74,8 +78,6 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 	}
 	//after loop, temp stores the filename
 
-	printf("!%s\n", temp);
-
 	unsigned int starting_cluster_num;
 	unsigned int size = 0; //to be pass back by search_file()
 
@@ -85,9 +87,9 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 	printf("status: %d\n", status);
 
 	if(status == 0)
-		printf("%s: error - file not found\n",target);
+		printf("%s: error - file not found\n",target_backup);
 	else if (status == -1)
-		printf("%s: error - fail to recover\n",target);
+		printf("%s: error - fail to recover\n",target_backup);
 	else
 	{
 		printf("cluster num: %u\n", starting_cluster_num);
@@ -113,7 +115,7 @@ int recover_main(DiskInfo diskinfo, unsigned char target[], unsigned char dest[]
 			}
 			pread(diskinfo.disk_fd, buf, size % 1024, address + k*1024);
 			pwrite(outfile, buf, size % 1024, k*1024);
-			printf("%s: recovered\n",target);
+			printf("%s: recovered\n",target_backup);
 		}
 		close(outfile);
 
